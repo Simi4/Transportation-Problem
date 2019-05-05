@@ -15,7 +15,6 @@ Vector::Vector(std::initializer_list<double> list) : std::vector<double>(list)
 
 Vector::Vector(const size_t size) : std::vector<double>(size)
 {
-	std::fill(begin(), end(), 0.0);
 }
 
 
