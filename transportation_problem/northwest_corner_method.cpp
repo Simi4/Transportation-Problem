@@ -14,7 +14,7 @@ PlanMatrix::PlanMatrix(const size_t k, const size_t n) : Matrix(k, n)
 
 
 
-Table::Table(const Matrix& traffic, const Vector& suppliers, const Vector& consumers, const PlanMatrix& plan)
+TableNCM::TableNCM(const Matrix& traffic, const Vector& suppliers, const Vector& consumers, const PlanMatrix& plan)
 	: Matrix(traffic)
 	, suppliers(suppliers)
 	, consumers(consumers)
@@ -24,7 +24,7 @@ Table::Table(const Matrix& traffic, const Vector& suppliers, const Vector& consu
 
 
 
-double Table::f() const
+double TableNCM::f() const
 {
 	double ret = 0.0;
 	for (int i = 0; i < k(); i++)
@@ -39,7 +39,7 @@ double Table::f() const
 
 
 
-Table transportation_problem::northwest_corner_method(
+TableNCM transportation_problem::northwest_corner_method(
 	const Matrix& traffic, const Vector& suppliers, const Vector& consumers)
 {
 	Matrix t = traffic;
@@ -91,12 +91,12 @@ Table transportation_problem::northwest_corner_method(
 		}
 	}
 
-	return Table(t, s, c, plan);
+	return TableNCM(t, s, c, plan);
 }
 
 
 
-std::ostream& operator<< (std::ostream& os, const Table& val)
+std::ostream& operator<< (std::ostream& os, const TableNCM& val)
 {
 	return os;
 }

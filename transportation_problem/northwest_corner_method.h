@@ -10,21 +10,21 @@ namespace transportation_problem
 		PlanMatrix() = default;
 	};
 
-	class Table : public Matrix {
+	class TableNCM : public Matrix {
 	private:
 		Vector suppliers;
 		Vector consumers;
 		PlanMatrix plan;
 
 	public:
-		Table(const Matrix&, const Vector&, const Vector&, const PlanMatrix&);
-		Table() = default;
+		TableNCM(const Matrix&, const Vector&, const Vector&, const PlanMatrix&);
+		TableNCM() = default;
 
 		double f() const;
 	};
 
-	Table northwest_corner_method(const Matrix&, const Vector&, const Vector&);
+	TableNCM northwest_corner_method(const Matrix&, const Vector&, const Vector&);
 }
 
 
-std::ostream& operator<< (std::ostream&, const transportation_problem::Table&);
+std::ostream& operator<< (std::ostream&, const transportation_problem::TableNCM&);
