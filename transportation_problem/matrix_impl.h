@@ -9,6 +9,9 @@ namespace transportation_problem
 		Matrix(std::initializer_list<Vector>);
 		Matrix(const size_t, const size_t);
 		Matrix() = default;
+
+		size_t k() const;
+		size_t n() const;
 	};
 }
 

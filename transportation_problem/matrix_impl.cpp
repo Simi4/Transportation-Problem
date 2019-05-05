@@ -23,6 +23,20 @@ Matrix::Matrix(const size_t k, const size_t n) : std::vector<Vector>(k)
 
 
 
+size_t Matrix::k() const
+{
+	return size();
+}
+
+
+
+size_t Matrix::n() const
+{
+	return size() ? front().size() : 0;
+}
+
+
+
 std::ostream& operator<< (std::ostream& os, const Matrix& val)
 {
 	for (const auto& it : val)
