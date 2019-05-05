@@ -34,3 +34,14 @@ std::ostream& operator<< (std::ostream& os, const Vector& val)
 	}
 	return os;
 }
+
+
+
+std::istream& operator>> (std::istream& is, Vector& val)
+{
+	for (auto& it : val)
+	{
+		is >> it;
+	}
+	return is;
+}

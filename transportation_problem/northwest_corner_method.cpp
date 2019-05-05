@@ -10,16 +10,59 @@ using namespace transportation_problem;
 
 PlanMatrix::PlanMatrix(const size_t k, const size_t n) : Matrix(k, n)
 {
+	for (auto& row : *this)
+	{
+		fill(row.begin(), row.end(), std::numeric_limits<double>::quiet_NaN());
+	}
 }
 
 
 
-TableNCM::TableNCM(const Matrix& traffic, const Vector& suppliers, const Vector& consumers, const PlanMatrix& plan)
+TableNCM::TableNCM(const Matrix& traffic, const Vector& _suppliers, const Vector& _consumers)
 	: Matrix(traffic)
-	, suppliers(suppliers)
-	, consumers(consumers)
-	, plan(plan)
+	, suppliers(_suppliers)
+	, consumers(_consumers)
 {
+	auto suppliers_sum = suppliers.sum();
+	auto consumers_sum = consumers.sum();
+
+	if (suppliers_sum > consumers_sum)
+	{
+		auto new_n = n() + 1;
+		for (auto& row : *this)
+		{
+			row.resize(new_n);
+		}
+		consumers.push_back(suppliers_sum - consumers_sum);
+	}
+	else if (suppliers_sum < consumers_sum)
+	{
+		throw std::runtime_error("Check the balance!");
+	}
+
+	plan = PlanMatrix(k(), n());
+
+	double min_val;
+	for (size_t i = 0; i < k(); i++)
+	{
+		for (size_t j = 0; j < n(); j++)
+		{
+			if (consumers[j] == 0.0)
+			{
+				continue;
+			}
+
+			min_val = std::min(suppliers[i], consumers[j]);
+			plan[i][j] = min_val;
+			suppliers[i] -= min_val;
+			consumers[j] -= min_val;
+
+			if (suppliers[i] == 0.0)
+			{
+				break;
+			}
+		}
+	}
 }
 
 
@@ -27,11 +70,14 @@ TableNCM::TableNCM(const Matrix& traffic, const Vector& suppliers, const Vector&
 double TableNCM::f() const
 {
 	double ret = 0.0;
-	for (int i = 0; i < k(); i++)
+	for (size_t i = 0; i < k(); i++)
 	{
-		for (int j = 0; j < n(); j++)
+		for (size_t j = 0; j < n(); j++)
 		{
-			ret += (*this)[i][j] * plan[i][j];
+			if (!std::isnan(plan[i][j]))
+			{
+				ret += (*this)[i][j] * plan[i][j];
+			}
 		}
 	}
 	return ret;
@@ -39,64 +85,8 @@ double TableNCM::f() const
 
 
 
-TableNCM transportation_problem::northwest_corner_method(
-	const Matrix& traffic, const Vector& suppliers, const Vector& consumers)
-{
-	Matrix t = traffic;
-	Vector s = suppliers;
-	Vector c = consumers;
-
-	auto k = t.k();
-	auto n = t.n();
-
-	auto suppliers_sum = s.sum();
-	auto consumers_sum = c.sum();
-
-	if (suppliers_sum > consumers_sum)
-	{
-		n = n + 1;
-		c.resize(n);
-		c[n - 1] = suppliers_sum - consumers_sum;
-		for (auto& row : t)
-		{
-			t.resize(n);
-		}
-	}
-	else if (suppliers_sum < consumers_sum)
-	{
-		throw std::runtime_error("Check the balance!");
-	}
-
-	PlanMatrix plan(k, n);
-
-	double min_val;
-	for (auto i = 0; i < k; i++)
-	{
-		for (auto j = 0; j < n; j++)
-		{
-			if (c[j] == 0.0)
-			{
-				continue;
-			}
-
-			min_val = std::min(s[i], c[j]);
-			plan[i][j] = min_val;
-			s[i] -= min_val;
-			c[j] -= min_val;
-
-			if (s[i] == 0.0)
-			{
-				break;
-			}
-		}
-	}
-
-	return TableNCM(t, s, c, plan);
-}
-
-
-
 std::ostream& operator<< (std::ostream& os, const TableNCM& val)
 {
+	os << static_cast<Matrix>(val);
 	return os;
 }

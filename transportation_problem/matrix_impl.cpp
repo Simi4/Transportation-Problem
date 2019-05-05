@@ -45,3 +45,14 @@ std::ostream& operator<< (std::ostream& os, const Matrix& val)
 	}
 	return os;
 }
+
+
+
+std::istream& operator>> (std::istream& is, Matrix& val)
+{
+	for (auto& it : val)
+	{
+		is >> it;
+	}
+	return is;
+}

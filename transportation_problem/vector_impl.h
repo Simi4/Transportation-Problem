@@ -17,3 +17,4 @@ namespace transportation_problem
 
 
 std::ostream& operator<< (std::ostream& os, const transportation_problem::Vector& val);
+std::istream& operator>> (std::istream& is, transportation_problem::Vector& val);

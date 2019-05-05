@@ -11,19 +11,16 @@ namespace transportation_problem
 	};
 
 	class TableNCM : public Matrix {
-	private:
+	public:
 		Vector suppliers;
 		Vector consumers;
 		PlanMatrix plan;
 
-	public:
-		TableNCM(const Matrix&, const Vector&, const Vector&, const PlanMatrix&);
+		TableNCM(const Matrix&, const Vector&, const Vector&);
 		TableNCM() = default;
 
 		double f() const;
 	};
-
-	TableNCM northwest_corner_method(const Matrix&, const Vector&, const Vector&);
 }
 
 
