@@ -11,20 +11,23 @@ PotentialsMethod::PotentialsMethod(TableNCM table) : table(table), u(table.k()),
 }
 
 
-
+// Cost - u - v
 void PotentialsMethod::calc_differences()
 {
-	for (size_t i = 0; i < table.k(); ++i)
-	{
-		for (size_t j = 0; j < table.n(); ++j)
-		{
-			differences[i][j] = table[i][j] - (u[i] + v[j]);
-		}
-	}
+    for (size_t i = 0; i < table.k(); ++i)
+    {
+        for (size_t j = 0; j < table.n(); ++j)
+        {
+            // For empty cells
+            if(std::isnan(table.plan[i][j]))
+                differences[i][j] = table[i][j] - (u[i] + v[j]);
+        }
+    }
 }
 
 
 
+// For full cells
 void PotentialsMethod::calc_potentials()
 {
 	fill(u.begin(), u.end(), std::numeric_limits<double>::quiet_NaN());
@@ -73,78 +76,128 @@ void PotentialsMethod::calc_potentials()
 
 bool PotentialsMethod::is_optimal()
 {
-	calc_potentials();
-	calc_differences();
+    calc_potentials();
+    calc_differences();
 
-	for (size_t i = 0; i < table.k(); ++i)
-	{
-		for (size_t j = 0; j < table.n(); ++j)
-		{
-			if (differences[i][j] > std::numeric_limits<double>::epsilon())
-			{
-				return false;
-			}
-		}
-	}
-	return true;
+    for (size_t i = 0; i < table.k(); ++i)
+    {
+        for (size_t j = 0; j < table.n(); ++j)
+        {
+            // If negative values are in the differences
+            if(differences[i][j] < 0)
+            {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 
 
 void PotentialsMethod::optimize()
 {
-	top = { 0, 0 };
-	double abs_max = differences[0][0];
-	for (size_t i = 0; i < table.k(); ++i)
-	{
-		for (size_t j = 0; j < table.n(); ++j)
-		{
-			if (differences[i][j] > abs_max)
-			{
-				abs_max = differences[i][j];
-				top = { i, j };
-			}
-		}
-	}
+    // Find the min. negative value
+    int min_i = 0;
+    int min_j = 0;
+    int min = std::numeric_limits<int>::max(); // Initialize to a large positive value;
 
-	if (!find_cycle() || cycle.size() < 4)
-	{
-		throw std::runtime_error("Cycle not found!");
-	}
+    for (size_t i = 0; i < table.k(); ++i)
+    {
+        for (size_t j = 0; j < table.n(); ++j)
+        {
+            if(differences[i][j] <= min) {
+                min = differences[i][j];
+                min_i = i;
+                min_j = j;
+            }
+        }
+    }
+    // Min. negative value
+    top = { min_i, min_j };
 
-	int sign = 1;
-	int mi = -1, mj = -1;
-	double mval = 0.0;
+    if (!find_cycle() || cycle.size() < 4)
+    {
+        throw std::runtime_error("Cycle not found!");
+    }
 
-	for (const auto& it : cycle)
-	{
-		if (sign == -1)
-		{
-			if (mi == -1 || mval > table.plan[it.first][it.second])
-			{
-				mi = it.first;
-				mj = it.second;
-				mval = table.plan[mi][mj];
-			}
-		}
-		sign *= -1;
-	}
+    int firstVal = 0;
+    int secondVal = 0;
+    int val_iF = 0;
+    int val_jF = 0;
 
-	sign = 1;
-	for (const auto& it : cycle)
-	{
-		auto i = it.first;
-		auto j = it.second;
+    int val_iS = 0;
+    int val_jS = 0;
 
-		if (std::isnan(table.plan[i][j]))
-		{
-			table.plan[i][j] = 0.0;
-		}
-		table.plan[i][j] += mval * sign;
-		sign *= -1;
-	}
+    // Finding cells, which form the loop
 
-	table.plan[mi][mj] = std::numeric_limits<double>::quiet_NaN();
+    // Top is first, so skip it
+    for(int i = 1; i<cycle.size(); i++){
+        if(top.first == cycle[i].first){
+            firstVal = table.plan[top.first][cycle[i].second];
+
+            val_iF = top.first;
+            val_jF = cycle[i].second;
+
+
+        }
+    }
+
+    // Top is first, so skip it
+    for(int i = 1; i<cycle.size(); i++){
+        if(top.second == cycle[i].second){
+            secondVal = table.plan[cycle[i].first][cycle[i].second];
+
+            val_iS = cycle[i].first;
+            val_jS = cycle[i].second;
+        }
+    }
+
+
+    // Adjust the values in the result
+    if(firstVal < secondVal){
+
+         table.plan[val_iS][val_jF] += firstVal;
+         table.plan[val_iS][val_jS] -= firstVal;
+
+        if (std::isnan(table.plan[top.first][top.second]))
+        {
+            table.plan[top.first][top.second] = 0.0;
+        }
+        table.plan[top.first][top.second] += firstVal;
+
+        // Make it "nan" 
+        table.plan[val_iF][val_jF] = std::numeric_limits<double>::quiet_NaN();
+
+        // Reset differences
+        for(int i = 0; i<table.k(); ++i){
+            for(int j=0; j<table.n(); ++j){
+                differences[i][j] = 0.0;
+            }
+        }
+
+    }else{
+
+         table.plan[val_iS][val_jF] += secondVal;
+         table.plan[val_iF][val_jF] -= secondVal;
+
+        if (std::isnan(table.plan[top.first][top.second]))
+        {
+            table.plan[top.first][top.second] = 0.0;
+        }
+        table.plan[top.first][top.second] += secondVal;
+
+        // Make it "nan" 
+        table.plan[val_iS][val_jS] = std::numeric_limits<double>::quiet_NaN();
+
+        // Reset differences
+        for(int i = 0; i<table.k(); i++){
+            for(int j=0; j<table.n(); j++){
+                differences[i][j] = 0.0;
+            }
+        }
+    }
+
 }
 
 
